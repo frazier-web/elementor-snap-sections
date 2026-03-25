@@ -86,6 +86,25 @@ final class TP_Skew_Slider_Plugin {
         $this->_enqueue_assets();
     }
 
+    /**
+     * Known GSAP handle names used by popular themes / plugins.
+     * We check these before deciding whether to load our own copy.
+     */
+    const GSAP_HANDLES = [
+        'gsap',
+        'gsap-core',
+        'gsap-bundle',
+        'gsap-js',
+        'greensock',
+        'tp-gsap',
+        'avista-gsap',
+        'avista-scripts',   // Avista bundles GSAP in its main script
+        'avista-main',
+    ];
+
+    const GSAP_CDN      = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
+    const OBSERVER_CDN  = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Observer.min.js';
+
     private function _register_assets() {
         wp_register_style(
             'tp-skew-slider',
@@ -94,10 +113,21 @@ final class TP_Skew_Slider_Plugin {
             TP_SKEW_SLIDER_VERSION
         );
 
+        /* -----------------------------------------------------------
+         * GSAP fallback
+         * If the active theme (Avista, Agntix, etc.) already enqueues
+         * GSAP we reuse its handle and skip the CDN load entirely.
+         * The Observer plugin is checked separately because some themes
+         * bundle it inside their main JS file rather than as a named
+         * WordPress script handle.
+         * ----------------------------------------------------------- */
+        $gsap_dep      = $this->_resolve_gsap_handle();
+        $observer_dep  = $this->_resolve_observer_handle( $gsap_dep );
+
         wp_register_script(
             'tp-skew-slider-slideshow',
             TP_SKEW_SLIDER_URL . 'assets/js/slideshow.js',
-            [],
+            [ $gsap_dep ],
             TP_SKEW_SLIDER_VERSION,
             true
         );
@@ -105,10 +135,69 @@ final class TP_Skew_Slider_Plugin {
         wp_register_script(
             'tp-skew-slider',
             TP_SKEW_SLIDER_URL . 'assets/js/tp-skew-slider.js',
-            [ 'jquery', 'tp-skew-slider-slideshow' ],
+            [ 'jquery', $observer_dep, 'tp-skew-slider-slideshow' ],
             TP_SKEW_SLIDER_VERSION,
             true
         );
+    }
+
+    /**
+     * Return the handle of an already-registered GSAP script, or register
+     * our own CDN copy and return that handle.
+     */
+    private function _resolve_gsap_handle() {
+        global $wp_scripts;
+
+        foreach ( self::GSAP_HANDLES as $handle ) {
+            if ( isset( $wp_scripts->registered[ $handle ] ) ) {
+                return $handle;
+            }
+        }
+
+        if ( ! wp_script_is( 'tp-skew-gsap', 'registered' ) ) {
+            wp_register_script(
+                'tp-skew-gsap',
+                self::GSAP_CDN,
+                [],
+                '3.12.5',
+                true
+            );
+        }
+
+        return 'tp-skew-gsap';
+    }
+
+    /**
+     * Return the handle of an already-registered GSAP Observer script,
+     * or register our own CDN copy.
+     */
+    private function _resolve_observer_handle( $gsap_handle ) {
+        global $wp_scripts;
+
+        $observer_handles = [
+            'gsap-observer',
+            'gsap-observer-plugin',
+            'tp-gsap-observer',
+            'avista-gsap-observer',
+        ];
+
+        foreach ( $observer_handles as $handle ) {
+            if ( isset( $wp_scripts->registered[ $handle ] ) ) {
+                return $handle;
+            }
+        }
+
+        if ( ! wp_script_is( 'tp-skew-observer', 'registered' ) ) {
+            wp_register_script(
+                'tp-skew-observer',
+                self::OBSERVER_CDN,
+                [ $gsap_handle ],
+                '3.12.5',
+                true
+            );
+        }
+
+        return 'tp-skew-observer';
     }
 
     private function _enqueue_assets() {

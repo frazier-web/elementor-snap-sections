@@ -35,11 +35,13 @@ Features:
 2. Activate via Plugins > Installed Plugins.
 3. Elementor must be installed and active.
 
-IMPORTANT — GSAP requirement:
-The plugin's animations rely on GSAP (gsap, Observer plugin).
-GSAP is already bundled in many premium Elementor themes (Agntix, etc.).
-If your theme does NOT include GSAP you must enqueue it yourself or install
-the free "GSAP for Elementor" helper plugin.
+GSAP (automatic):
+The plugin's animations rely on GSAP and its Observer plugin.
+The plugin automatically detects whether the active theme (Avista, Agntix,
+and many other premium themes) has already registered GSAP. If it has, that
+copy is used and nothing extra is loaded. If no theme GSAP is found, the
+plugin silently loads GSAP 3.12.5 from cdnjs.cloudflare.com as a fallback.
+No manual configuration needed.
 
 == Usage ==
 
