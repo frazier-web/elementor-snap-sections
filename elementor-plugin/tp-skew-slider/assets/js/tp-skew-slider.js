@@ -53,6 +53,9 @@
         const wrap = area.querySelector( '.skew-slider-wrap' );
         if ( ! wrap ) return;
 
+        /* Mark wrapper so CSS knows JS is active */
+        area.closest( '.tp-skew-slider-widget' ).classList.add( 'tp-js-ready' );
+
         const scrollMode = area.dataset.scrollMode  || 'hijack';
         const tolerance  = parseInt( area.dataset.tolerance, 10 ) || 10;
 

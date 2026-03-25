@@ -70,11 +70,11 @@ class Widget extends Widget_Base {
             [
                 'label'   => __( 'Slide Background', 'tp-skew-slider' ),
                 'type'    => Controls_Manager::SELECT,
-                'default' => 'image',
+                'default' => 'none',
                 'options' => [
+                    'none'     => __( 'None (Template fills slide)', 'tp-skew-slider' ),
                     'image'    => __( 'Image', 'tp-skew-slider' ),
                     'color'    => __( 'Solid Color', 'tp-skew-slider' ),
-                    'none'     => __( 'None (Template fills slide)', 'tp-skew-slider' ),
                 ],
             ]
         );
@@ -121,11 +121,11 @@ class Widget extends Widget_Base {
             [
                 'label'   => __( 'Slide Content Source', 'tp-skew-slider' ),
                 'type'    => Controls_Manager::SELECT,
-                'default' => 'custom',
+                'default' => 'none',
                 'options' => [
-                    'custom'   => __( 'Custom HTML / Shortcode', 'tp-skew-slider' ),
-                    'template' => __( 'Elementor Template', 'tp-skew-slider' ),
                     'none'     => __( 'None', 'tp-skew-slider' ),
+                    'template' => __( 'Elementor Template', 'tp-skew-slider' ),
+                    'custom'   => __( 'Custom HTML / Shortcode', 'tp-skew-slider' ),
                 ],
                 'separator' => 'before',
             ]
@@ -160,7 +160,7 @@ class Widget extends Widget_Base {
             [
                 'label'     => __( 'Show Text Overlay', 'tp-skew-slider' ),
                 'type'      => Controls_Manager::SWITCHER,
-                'default'   => 'yes',
+                'default'   => '',
                 'separator' => 'before',
             ]
         );
@@ -205,11 +205,11 @@ class Widget extends Widget_Base {
                 'type'    => Controls_Manager::REPEATER,
                 'fields'  => $repeater->get_controls(),
                 'default' => [
-                    [ 'label' => __( 'Digital Platform', 'tp-skew-slider' ), 'title' => "Project\nOne" ],
-                    [ 'label' => __( 'Digital Platform', 'tp-skew-slider' ), 'title' => "Project\nTwo" ],
-                    [ 'label' => __( 'Digital Platform', 'tp-skew-slider' ), 'title' => "Project\nThree" ],
+                    [ 'bg_type' => 'none', 'content_source' => 'none', 'show_text_overlay' => '' ],
+                    [ 'bg_type' => 'none', 'content_source' => 'none', 'show_text_overlay' => '' ],
+                    [ 'bg_type' => 'none', 'content_source' => 'none', 'show_text_overlay' => '' ],
                 ],
-                'title_field' => '{{{ title }}}',
+                'title_field' => '{{{ title || "Slide" }}}',
             ]
         );
 

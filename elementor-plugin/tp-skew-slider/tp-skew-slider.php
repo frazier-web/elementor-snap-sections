@@ -25,6 +25,21 @@ final class TP_Skew_Slider_Plugin {
 
     private static $instance = null;
 
+    const GSAP_HANDLES = [
+        'gsap',
+        'gsap-core',
+        'gsap-bundle',
+        'gsap-js',
+        'greensock',
+        'tp-gsap',
+        'avista-gsap',
+        'avista-scripts',
+        'avista-main',
+    ];
+
+    const GSAP_CDN     = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
+    const OBSERVER_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Observer.min.js';
+
     public static function instance() {
         if ( is_null( self::$instance ) ) {
             self::$instance = new self();
@@ -42,11 +57,18 @@ final class TP_Skew_Slider_Plugin {
             return;
         }
 
-        add_action( 'elementor/widgets/register',      [ $this, 'register_widgets' ] );
-        add_action( 'elementor/elements/categories_registered', [ $this, 'register_category' ] );
-        add_action( 'wp_enqueue_scripts',              [ $this, 'enqueue_frontend_assets' ] );
-        add_action( 'elementor/editor/after_enqueue_scripts', [ $this, 'enqueue_editor_assets' ] );
-        add_action( 'elementor/preview/enqueue_scripts', [ $this, 'enqueue_preview_assets' ] );
+        add_action( 'elementor/widgets/register',                [ $this, 'register_widgets' ] );
+        add_action( 'elementor/elements/categories_registered',  [ $this, 'register_category' ] );
+
+        /*
+         * Register assets as early as possible so the handles exist whenever
+         * Elementor's get_script_depends() / get_style_depends() are called.
+         * wp_enqueue_scripts fires on the frontend; the editor/preview hooks
+         * fire inside the Elementor iframe.
+         */
+        add_action( 'wp_enqueue_scripts',                        [ $this, 'register_and_enqueue' ] );
+        add_action( 'elementor/editor/after_enqueue_scripts',    [ $this, 'register_and_enqueue' ] );
+        add_action( 'elementor/preview/enqueue_scripts',         [ $this, 'register_and_enqueue' ] );
     }
 
     public function register_category( $elements_manager ) {
@@ -64,65 +86,16 @@ final class TP_Skew_Slider_Plugin {
         $widgets_manager->register( new \TP_Skew_Slider\Widget() );
     }
 
-    public function enqueue_frontend_assets() {
-        if ( ! is_singular() && ! is_archive() ) {
-            return;
-        }
+    public function register_and_enqueue() {
+        $gsap_dep     = $this->_resolve_gsap_handle();
+        $observer_dep = $this->_resolve_observer_handle( $gsap_dep );
 
-        $this->_register_assets();
-
-        if ( \Elementor\Plugin::$instance->db->is_built_with_elementor( get_the_ID() ) ) {
-            $this->_enqueue_assets();
-        }
-    }
-
-    public function enqueue_editor_assets() {
-        $this->_register_assets();
-        $this->_enqueue_assets();
-    }
-
-    public function enqueue_preview_assets() {
-        $this->_register_assets();
-        $this->_enqueue_assets();
-    }
-
-    /**
-     * Known GSAP handle names used by popular themes / plugins.
-     * We check these before deciding whether to load our own copy.
-     */
-    const GSAP_HANDLES = [
-        'gsap',
-        'gsap-core',
-        'gsap-bundle',
-        'gsap-js',
-        'greensock',
-        'tp-gsap',
-        'avista-gsap',
-        'avista-scripts',   // Avista bundles GSAP in its main script
-        'avista-main',
-    ];
-
-    const GSAP_CDN      = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
-    const OBSERVER_CDN  = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Observer.min.js';
-
-    private function _register_assets() {
         wp_register_style(
             'tp-skew-slider',
             TP_SKEW_SLIDER_URL . 'assets/css/tp-skew-slider.css',
             [],
             TP_SKEW_SLIDER_VERSION
         );
-
-        /* -----------------------------------------------------------
-         * GSAP fallback
-         * If the active theme (Avista, Agntix, etc.) already enqueues
-         * GSAP we reuse its handle and skip the CDN load entirely.
-         * The Observer plugin is checked separately because some themes
-         * bundle it inside their main JS file rather than as a named
-         * WordPress script handle.
-         * ----------------------------------------------------------- */
-        $gsap_dep      = $this->_resolve_gsap_handle();
-        $observer_dep  = $this->_resolve_observer_handle( $gsap_dep );
 
         wp_register_script(
             'tp-skew-slider-slideshow',
@@ -139,12 +112,12 @@ final class TP_Skew_Slider_Plugin {
             TP_SKEW_SLIDER_VERSION,
             true
         );
+
+        wp_enqueue_style( 'tp-skew-slider' );
+        wp_enqueue_script( 'tp-skew-slider-slideshow' );
+        wp_enqueue_script( 'tp-skew-slider' );
     }
 
-    /**
-     * Return the handle of an already-registered GSAP script, or register
-     * our own CDN copy and return that handle.
-     */
     private function _resolve_gsap_handle() {
         global $wp_scripts;
 
@@ -155,22 +128,12 @@ final class TP_Skew_Slider_Plugin {
         }
 
         if ( ! wp_script_is( 'tp-skew-gsap', 'registered' ) ) {
-            wp_register_script(
-                'tp-skew-gsap',
-                self::GSAP_CDN,
-                [],
-                '3.12.5',
-                true
-            );
+            wp_register_script( 'tp-skew-gsap', self::GSAP_CDN, [], '3.12.5', true );
         }
 
         return 'tp-skew-gsap';
     }
 
-    /**
-     * Return the handle of an already-registered GSAP Observer script,
-     * or register our own CDN copy.
-     */
     private function _resolve_observer_handle( $gsap_handle ) {
         global $wp_scripts;
 
@@ -188,22 +151,10 @@ final class TP_Skew_Slider_Plugin {
         }
 
         if ( ! wp_script_is( 'tp-skew-observer', 'registered' ) ) {
-            wp_register_script(
-                'tp-skew-observer',
-                self::OBSERVER_CDN,
-                [ $gsap_handle ],
-                '3.12.5',
-                true
-            );
+            wp_register_script( 'tp-skew-observer', self::OBSERVER_CDN, [ $gsap_handle ], '3.12.5', true );
         }
 
         return 'tp-skew-observer';
-    }
-
-    private function _enqueue_assets() {
-        wp_enqueue_style( 'tp-skew-slider' );
-        wp_enqueue_script( 'tp-skew-slider-slideshow' );
-        wp_enqueue_script( 'tp-skew-slider' );
     }
 
     public function admin_notice_missing_elementor() {

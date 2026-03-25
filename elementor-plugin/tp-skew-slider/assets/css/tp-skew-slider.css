@@ -25,14 +25,8 @@
     background: var(--tpss-black);
 }
 
-/* Loading state — hide until images are ready */
-.tp-skew-slider-widget .skew-slider-area.loading {
-    visibility: hidden;
-}
-
-.tp-skew-slider-widget .skew-slider-area.tp-slides-ready {
-    visibility: visible;
-}
+/* No visibility hiding — slides use opacity:0 individually.
+   This prevents a blank white screen if JS fails to load. */
 
 /* ============================================================
    Slide grid
@@ -61,6 +55,17 @@
     display: grid;
     place-items: center;
     will-change: transform, opacity;
+}
+
+/* First slide is visible before JS runs — GSAP will take over once loaded */
+.tp-skew-slider-widget .slide:first-child {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tp-skew-slider-widget.tp-js-ready .slide:first-child:not(.slide--current) {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .tp-skew-slider-widget .slide--current {
