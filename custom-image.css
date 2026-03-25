@@ -1,0 +1,107 @@
+.tp-hero-video {
+    border-radius: 200px !important;
+    box-shadow: 0 4px 4px 0 rgba(20, 20, 20, 0.2) !important;
+}
+
+.des-portfolio-item img {
+    border-radius: 20px !important;
+}
+
+div .dgm-blog-thumb img {
+    width: 100%;
+    height: 160px;
+    transition: 0.9s;
+    object-fit: cover;
+}
+
+div .tp-header-logo img {
+    max-width: inherit;
+}
+
+.dgm-testimonial-author-img {
+    border-radius: 50% !important;
+    border: 2px solid var(--tp-common-white) !important;
+}
+
+.creative-hero-black-box::before {
+    right: 0px !important;
+}
+
+div.creative-hero-avater img {
+    border-radius: 50%;
+    height: 54px;
+}
+.creative-choose-text-bottom.tp-el-title::after {
+    background-color: transparent !important;
+}
+.design-project-thumb img {
+    border-radius: 30px !important;
+}
+.design-service-img {
+    border-radius: 10px !important;
+    height: 110px !important;
+}
+div.design-work-item img {
+    border-radius: 30px;
+}
+
+.tp-copyright-img {
+    width: 75px;
+}
+div.st-service-item-thumb img {
+    border-radius: 10px;
+}
+.st-testimonial-bottom span a {
+    text-decoration: underline !important;
+}
+.st-award-list-thumb-1, .st-award-list-thumb-2, .st-award-list-thumb-3, .st-award-list-thumb-4, .st-award-list-thumb-5 {
+    height: 100%;
+    border-radius: 10px !important;
+}
+
+.pp-project-item-thumb img {
+    width: 100%;
+}
+div.tp-portfolio-11-slider-nav-thumb img {
+    border-radius: 14px;
+    box-shadow: 0px 20px 20px 0px rgba(0, 0, 0, 0.2);
+}
+
+div.tp-team-item-thumb img {
+    height: 500px;
+    border-radius: 20px;
+}
+div.creative-service-category span:not(:last-child)::before {
+    background-color: currentColor;
+}
+div.crp-success-img img {
+    height: 100%;
+}
+.tp-porfolio-10-bg-1, .tp-porfolio-10-bg-2, .tp-porfolio-10-bg-3, .tp-porfolio-10-bg-4, .tp-porfolio-10-bg-5, .tp-porfolio-10-bg-6, .tp-porfolio-10-bg-7, .tp-porfolio-10-bg-8 {
+  height: 100% !important;
+}
+.tp-el-h-100 .tp-banner-img.tp-el-img img {
+    height: 100%;
+    object-fit: cover;
+} 
+
+@media (max-width: 575px) {
+.tp-el-h-100 .tp-banner-img.tp-el-img img {
+    height: auto;
+    object-fit: cover;
+} 
+}
+div.tp-pd-5-light-slider-thumb img {
+    width: 100%;
+    border-radius: 30px;
+    border: 1px solid rgba(0, 0, 0, 0.0705882353);
+}
+body .it-hero-thumb img {
+    max-width: inherit;
+}
+.tp_big_mesonary img{
+    width: 100%;
+    transition: 0.9s;
+    Height:auto;
+    border-radius: 14px !important;
+} 
