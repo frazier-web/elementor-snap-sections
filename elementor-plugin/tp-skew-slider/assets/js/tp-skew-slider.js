@@ -1,80 +1,48 @@
 /**
  * TP Skew Slider — Frontend initialiser
  *
- * Supports two scroll modes set via data-scroll-mode on .skew-slider-area:
- *
- *   hijack   — Slider sticks to the viewport top. Each scroll tick
- *              advances one slide. After the last slide the page is
- *              released and normal scrolling resumes. Scrolling back
- *              up re-engages the slider at the last slide and walks
- *              backwards, releasing at the first slide.
- *
- *   freeflow — Slider scrolls with the page (no hijack). Arrow
- *              buttons and swipe still work.
- *
- * Multiple instances on one page are supported.
+ * scroll-mode="hijack"   — slider sticks to viewport, each wheel tick
+ *                          advances one slide, releases after last/first.
+ * scroll-mode="freeflow" — no scroll hijack; buttons + swipe only.
  */
 
 ( function ( $ ) {
 
     'use strict';
 
-    /**
-     * Preload background-image elements using native Promise + load events.
-     * Falls back gracefully if imagesLoaded is not available.
-     */
-    function preloadSlideImages( wrap ) {
-        const imgs = wrap.querySelectorAll( '.slide__img' );
-
-        if ( ! imgs.length ) {
-            return Promise.resolve();
-        }
-
-        const promises = Array.from( imgs ).map( el => {
-            const urlMatch = ( el.style.backgroundImage || '' ).match( /url\(["']?([^"')]+)["']?\)/ );
-            if ( ! urlMatch ) return Promise.resolve();
-
-            return new Promise( resolve => {
-                const img = new Image();
-                img.onload  = resolve;
-                img.onerror = resolve;
-                img.src     = urlMatch[ 1 ];
-            } );
-        } );
-
-        return Promise.all( promises );
-    }
-
-    /**
-     * Initialise one slider area.
-     * @param {HTMLElement} area  — .skew-slider-area
-     */
     function initSlider( area ) {
         const wrap = area.querySelector( '.skew-slider-wrap' );
         if ( ! wrap ) return;
 
-        /* Mark wrapper so CSS knows JS is active */
-        area.closest( '.tp-skew-slider-widget' ).classList.add( 'tp-js-ready' );
+        if ( typeof window.TPSkewSlideshow === 'undefined' ) {
+            console.warn( 'TP Skew Slider: TPSkewSlideshow not found — check slideshow.js loaded.' );
+            return;
+        }
 
-        const scrollMode = area.dataset.scrollMode  || 'hijack';
+        const widget     = area.closest( '.tp-skew-slider-widget' );
+        const scrollMode = area.dataset.scrollMode || 'hijack';
         const tolerance  = parseInt( area.dataset.tolerance, 10 ) || 10;
-
         const slideshow  = new window.TPSkewSlideshow( wrap );
 
-        const prevBtn    = area.querySelector( '.skew-slider-prev' );
-        const nextBtn    = area.querySelector( '.skew-slider-next' );
+        if ( widget ) {
+            widget.classList.add( 'tp-js-ready' );
+        }
+
+        /* ---- Button navigation ---------------------------------------- */
+        const prevBtn = area.querySelector( '.skew-slider-prev' );
+        const nextBtn = area.querySelector( '.skew-slider-next' );
 
         if ( prevBtn ) prevBtn.addEventListener( 'click', () => slideshow.prev() );
         if ( nextBtn ) nextBtn.addEventListener( 'click', () => slideshow.next() );
 
-        /* -- touch swipe support (no Observer dependency) --------------- */
+        /* ---- Touch swipe ---------------------------------------------- */
         let touchStartY = null;
 
-        wrap.addEventListener( 'touchstart', e => {
+        area.addEventListener( 'touchstart', function ( e ) {
             touchStartY = e.touches[ 0 ].clientY;
         }, { passive: true } );
 
-        wrap.addEventListener( 'touchend', e => {
+        area.addEventListener( 'touchend', function ( e ) {
             if ( touchStartY === null ) return;
             const delta = touchStartY - e.changedTouches[ 0 ].clientY;
             if ( Math.abs( delta ) > tolerance ) {
@@ -83,160 +51,106 @@
             touchStartY = null;
         }, { passive: true } );
 
-        /* -- GSAP Observer (if available — theme bundle already loads it) */
-        if ( typeof Observer !== 'undefined' ) {
-            Observer.create( {
-                target    : scrollMode === 'hijack' ? window : area,
-                type      : 'wheel,touch,pointer',
-                onDown    : () => { if ( isActive ) slideshow.prev(); },
-                onUp      : () => { if ( isActive ) slideshow.next(); },
-                wheelSpeed: -1,
-                tolerance : tolerance,
-                preventDefault: scrollMode === 'hijack',
-            } );
-        }
-
-        /* -- Scroll-hijack implementation --------------------------------
-         *
-         *  Strategy:
-         *   1. Use GSAP ScrollTrigger (if available) OR a plain
-         *      IntersectionObserver + wheel listener to detect when the
-         *      slider is in the viewport.
-         *   2. When fully in view, block the page scroll and route wheel
-         *      events to the slideshow.
-         *   3. After the last slide (going down) or the first slide
-         *      (going up) the next wheel event releases the hijack and
-         *      lets the page scroll continue.
-         */
-
-        let isActive = false;   /* whether the slider owns the scroll */
-
+        /* ---- Scroll hijack -------------------------------------------- */
         if ( scrollMode === 'hijack' ) {
-            _initHijackScroll( area, wrap, slideshow, tolerance, setActive );
-        }
-
-        function setActive( val ) {
-            isActive = val;
+            _initHijack( area, slideshow, tolerance );
         }
     }
 
-    /* ------------------------------------------------------------------ */
-    function _initHijackScroll( area, wrap, slideshow, tolerance, setActive ) {
+    /* -------------------------------------------------------------------- */
+    function _initHijack( area, slideshow, tolerance ) {
 
-        /* We keep track of whether the slider currently "owns" scrolling */
-        let hijacked       = false;
-        let releaseTimer   = null;
-        let accumulatedDY  = 0;
+        let hijacked      = false;
+        let accumulatedDY = 0;
+        let wheelCooldown = false;
 
-        /* Lock / unlock body scroll */
-        function lockScroll() {
+        function lock() {
             if ( hijacked ) return;
             hijacked = true;
-            setActive( true );
             document.body.style.overflow = 'hidden';
         }
 
-        function unlockScroll() {
+        function unlock() {
             if ( ! hijacked ) return;
             hijacked = false;
-            setActive( false );
+            accumulatedDY = 0;
             document.body.style.overflow = '';
         }
 
-        /* Watch whether the slider area is in the viewport */
-        const observer = new IntersectionObserver( entries => {
-            entries.forEach( entry => {
-                if ( entry.isIntersecting && entry.intersectionRatio >= 0.9 ) {
-                    lockScroll();
-                } else {
-                    unlockScroll();
-                }
-            } );
-        }, { threshold: 0.9 } );
+        /* Engage immediately if slider starts in view */
+        function checkVisibility() {
+            const rect = area.getBoundingClientRect();
+            const inView = rect.top >= -1 && rect.bottom <= window.innerHeight + 1;
+            if ( inView ) {
+                lock();
+            } else {
+                unlock();
+            }
+        }
 
-        observer.observe( area );
+        checkVisibility();
 
-        /* Wheel handler */
-        function onWheel( e ) {
+        /* Re-check on scroll (when released, scroll brings it back into view) */
+        window.addEventListener( 'scroll', checkVisibility, { passive: true } );
+
+        /* Wheel handler — attached to window so it fires even when body scroll is locked */
+        window.addEventListener( 'wheel', function ( e ) {
             if ( ! hijacked ) return;
 
             e.preventDefault();
-            e.stopPropagation();
+
+            if ( wheelCooldown ) return;
 
             accumulatedDY += e.deltaY;
-
             if ( Math.abs( accumulatedDY ) < tolerance ) return;
 
-            const direction = accumulatedDY > 0 ? 1 : -1;
-            accumulatedDY   = 0;
+            const direction   = accumulatedDY > 0 ? 1 : -1;
+            accumulatedDY     = 0;
 
-            const atStart = slideshow.current === 0;
             const atEnd   = slideshow.current === slideshow.slidesTotal - 1;
+            const atStart = slideshow.current === 0;
 
             if ( direction === 1 && atEnd ) {
-                /* Release scroll downward */
-                unlockScroll();
+                unlock();
+                /* Nudge the page scroll forward one tick so it actually moves */
+                window.scrollBy( { top: 80, behavior: 'auto' } );
                 return;
             }
 
             if ( direction === -1 && atStart ) {
-                /* Release scroll upward */
-                unlockScroll();
+                unlock();
+                window.scrollBy( { top: -80, behavior: 'auto' } );
                 return;
             }
 
+            /* Brief cooldown so rapid wheel events don't skip multiple slides */
+            wheelCooldown = true;
+            setTimeout( function () { wheelCooldown = false; }, 800 );
+
             direction === 1 ? slideshow.next() : slideshow.prev();
-        }
 
-        window.addEventListener( 'wheel', onWheel, { passive: false } );
-
-        /* Re-engage when scrolling brings the slider fully back into view */
-        window.addEventListener( 'scroll', () => {
-            if ( hijacked ) return;
-
-            const rect = area.getBoundingClientRect();
-            const fullyVisible =
-                rect.top    >= 0 &&
-                rect.bottom <= window.innerHeight;
-
-            if ( fullyVisible ) {
-                lockScroll();
-            }
-        }, { passive: true } );
+        }, { passive: false } );
     }
 
-    /* ------------------------------------------------------------------ */
+    /* -------------------------------------------------------------------- */
     function initAll() {
-        const areas = document.querySelectorAll( '.skew-slider-area' );
-        areas.forEach( area => {
-            preloadSlideImages( area ).then( () => {
-                area.classList.remove( 'loading' );
-                area.classList.add( 'tp-slides-ready' );
-            } );
-            initSlider( area );
-        } );
+        document.querySelectorAll( '.skew-slider-area' ).forEach( initSlider );
     }
 
-    /* -- Run on DOMContentLoaded, and also hook Elementor editor/preview  */
+    /* Run after DOM + scripts are ready */
     if ( document.readyState === 'loading' ) {
         document.addEventListener( 'DOMContentLoaded', initAll );
     } else {
         initAll();
     }
 
-    /* Elementor frontend hook — re-init when a widget is rendered live */
+    /* Elementor live preview — re-init when widget renders in editor */
     $( window ).on( 'elementor/frontend/init', function () {
         elementorFrontend.hooks.addAction(
             'frontend/element_ready/tp-skew-slider.default',
             function ( $scope ) {
                 const area = $scope[ 0 ].querySelector( '.skew-slider-area' );
-                if ( area ) {
-                    preloadSlideImages( area ).then( () => {
-                        area.classList.remove( 'loading' );
-                        area.classList.add( 'tp-slides-ready' );
-                    } );
-                    initSlider( area );
-                }
+                if ( area ) initSlider( area );
             }
         );
     } );
