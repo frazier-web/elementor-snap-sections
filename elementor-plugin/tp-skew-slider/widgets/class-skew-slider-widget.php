@@ -579,9 +579,11 @@ class Widget extends Widget_Base {
             $query->the_post();
             $count++;
 
+            $post_id = get_the_ID();
+
             $bg_style = '';
             if ( $bg_field && function_exists( 'get_field' ) ) {
-                $img = get_field( $bg_field );
+                $img = get_field( $bg_field, $post_id );
                 if ( ! empty( $img['url'] ) ) {
                     $bg_style = ' style="background-image:url(\'' . esc_url( $img['url'] ) . '\')"';
                 }
@@ -589,9 +591,16 @@ class Widget extends Widget_Base {
 
             $shortcode_content = '';
             if ( function_exists( 'get_field' ) ) {
-                $raw = get_field( 'shortcode' );
+                $raw = get_field( 'shortcode', $post_id );
                 if ( $raw ) {
                     $shortcode_content = do_shortcode( $raw );
+                }
+            }
+
+            if ( ! $shortcode_content ) {
+                $raw_meta = get_post_meta( $post_id, 'shortcode', true );
+                if ( $raw_meta ) {
+                    $shortcode_content = do_shortcode( $raw_meta );
                 }
             }
 
