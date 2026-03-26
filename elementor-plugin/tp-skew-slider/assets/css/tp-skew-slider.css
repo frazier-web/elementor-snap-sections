@@ -18,17 +18,30 @@
    Strip Elementor's default widget-container padding
    ============================================================ */
 .elementor-widget-tp-skew-slider .elementor-widget-container,
+.elementor-widget-tp-portfolio-slider-showcase .elementor-widget-container,
 .elementor-widget-container:has(> .skew-slider-area) {
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 0;
+    font-size: 0;
+    display: block;
+    vertical-align: top;
+}
+
+.elementor-widget-tp-skew-slider,
+.elementor-widget-tp-portfolio-slider-showcase,
+.elementor-element:has(.skew-slider-area),
+.e-con:has(.skew-slider-area) {
     padding: 0 !important;
     margin: 0 !important;
     line-height: 0;
     font-size: 0;
 }
 
-.elementor-element:has(.skew-slider-area),
-.e-con:has(.skew-slider-area) {
-    padding: 0 !important;
-    margin: 0 !important;
+.skew-slider-area {
+    display: block;
+    line-height: 0;
+    font-size: 0;
 }
 
 /* ============================================================
