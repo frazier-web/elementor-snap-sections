@@ -1,7 +1,3 @@
-/**
- * TP Skew Slider — Slideshow engine
- */
-
 ( function () {
 
     const NEXT = 1;
@@ -21,9 +17,7 @@
             this.slidesTotal = this.slides.length;
             this.isAnimating = false;
 
-            if ( typeof gsap !== 'undefined' ) {
-                gsap.set( this.el, { perspective: 1000 } );
-            }
+            gsap.set( this.el, { perspective: 1000 } );
 
             this.slides[ this.current ].classList.add( 'slide--current' );
             this._updateSlideNumber();
@@ -34,12 +28,11 @@
 
         _navigate( direction ) {
             if ( this.isAnimating ) return;
-            if ( typeof gsap === 'undefined' ) return;
 
             this.isAnimating = true;
 
-            const previous   = this.current;
-            this.current     = direction === NEXT
+            const previous = this.current;
+            this.current   = direction === NEXT
                 ? ( this.current < this.slidesTotal - 1 ? ++this.current : 0 )
                 : ( this.current > 0 ? --this.current : this.slidesTotal - 1 );
 
@@ -49,7 +42,7 @@
             const upcomingSlide = this.slides[ this.current ];
             const upcomingInner = this.slidesInner[ this.current ];
 
-            const tl = gsap.timeline( {
+            gsap.timeline( {
                 defaults: { duration: 1.2, ease: 'power3.inOut' },
                 onStart: () => {
                     upcomingSlide.classList.add( 'slide--current' );
@@ -60,26 +53,22 @@
                     gsap.set( upcomingSlide, { zIndex: 1 } );
                     this.isAnimating = false;
                 },
-            } );
-
-            tl.addLabel( 'start', 0 )
-              .to( currentSlide, { yPercent: -direction * 100 }, 'start' )
-              .fromTo( upcomingSlide, {
-                    yPercent  : 0,
-                    autoAlpha : 0,
-                    rotationX : 140,
-                    scale     : 0.1,
-                    z         : -1000,
-                }, {
-                    autoAlpha : 1,
-                    rotationX : 0,
-                    z         : 0,
-                    scale     : 1,
-                }, 'start+=0.1' );
-
-            if ( upcomingInner ) {
-                tl.fromTo( upcomingInner, { scale: 1.8 }, { scale: 1 }, 'start+=0.17' );
-            }
+            } )
+            .addLabel( 'start', 0 )
+            .to( currentSlide, { yPercent: -direction * 100 }, 'start' )
+            .fromTo( upcomingSlide, {
+                yPercent  : 0,
+                autoAlpha : 0,
+                rotationX : 140,
+                scale     : 0.1,
+                z         : -1000,
+            }, {
+                autoAlpha : 1,
+                rotationX : 0,
+                z         : 0,
+                scale     : 1,
+            }, 'start+=0.1' )
+            .fromTo( upcomingInner, { scale: 1.8 }, { scale: 1 }, 'start+=0.17' );
         }
 
         _updateSlideNumber() {

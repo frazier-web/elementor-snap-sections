@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'TP_SKEW_SLIDER_VERSION', '1.0.0' );
+define( 'TP_SKEW_SLIDER_VERSION', '1.1.0' );
 define( 'TP_SKEW_SLIDER_FILE',    __FILE__ );
 define( 'TP_SKEW_SLIDER_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'TP_SKEW_SLIDER_URL',     plugin_dir_url( __FILE__ ) );

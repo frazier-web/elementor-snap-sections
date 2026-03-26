@@ -8,17 +8,6 @@ use Elementor\Utils;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * TP Skew Slider Widget
- *
- * Each slide is an "empty shell" — the background is either:
- *   (a) a background image/video, or
- *   (b) left fully transparent so an Elementor template rendered
- *       inside `.slide__content-area` shows through.
- *
- * The JS/animation layer is identical to the original theme widget.
- * Navigation, scroll-hijack, and sticky behaviour are all preserved.
- */
 class Widget extends Widget_Base {
 
     public function get_name() {
@@ -52,19 +41,83 @@ class Widget extends Widget_Base {
     protected function register_controls() {
 
         /* ---------------------------------------------------------------
-         * SECTION: SLIDES
+         * SECTION: SLIDE SOURCE
+         * ------------------------------------------------------------- */
+        $this->start_controls_section(
+            'section_source',
+            [
+                'label' => __( 'Slide Source', 'tp-skew-slider' ),
+                'tab'   => Controls_Manager::TAB_CONTENT,
+            ]
+        );
+
+        $this->add_control(
+            'slide_source',
+            [
+                'label'   => __( 'Source', 'tp-skew-slider' ),
+                'type'    => Controls_Manager::SELECT,
+                'default' => 'cpt',
+                'options' => [
+                    'cpt'      => __( 'Post Type: section4slide (ACF shortcode field)', 'tp-skew-slider' ),
+                    'repeater' => __( 'Manual Repeater', 'tp-skew-slider' ),
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'cpt_posts_per_page',
+            [
+                'label'     => __( 'Max Slides', 'tp-skew-slider' ),
+                'type'      => Controls_Manager::NUMBER,
+                'default'   => -1,
+                'min'       => -1,
+                'condition' => [ 'slide_source' => 'cpt' ],
+            ]
+        );
+
+        $this->add_control(
+            'cpt_orderby',
+            [
+                'label'     => __( 'Order By', 'tp-skew-slider' ),
+                'type'      => Controls_Manager::SELECT,
+                'default'   => 'menu_order',
+                'options'   => [
+                    'menu_order' => __( 'Menu Order (drag to reorder in WP)', 'tp-skew-slider' ),
+                    'date'       => __( 'Publish Date', 'tp-skew-slider' ),
+                    'title'      => __( 'Title A–Z', 'tp-skew-slider' ),
+                ],
+                'condition' => [ 'slide_source' => 'cpt' ],
+            ]
+        );
+
+        $this->add_control(
+            'cpt_bg_image_field',
+            [
+                'label'       => __( 'ACF Background Image Field Key', 'tp-skew-slider' ),
+                'type'        => Controls_Manager::TEXT,
+                'default'     => '',
+                'placeholder' => 'e.g. slide_bg (leave blank = no background image)',
+                'condition'   => [ 'slide_source' => 'cpt' ],
+                'label_block' => true,
+            ]
+        );
+
+        $this->end_controls_section();
+
+        /* ---------------------------------------------------------------
+         * SECTION: MANUAL SLIDES (repeater — only shown when source=repeater)
          * ------------------------------------------------------------- */
         $this->start_controls_section(
             'section_slides',
             [
-                'label' => __( 'Slides', 'tp-skew-slider' ),
-                'tab'   => Controls_Manager::TAB_CONTENT,
+                'label'     => __( 'Slides', 'tp-skew-slider' ),
+                'tab'       => Controls_Manager::TAB_CONTENT,
+                'condition' => [ 'slide_source' => 'repeater' ],
             ]
         );
 
         $repeater = new Repeater();
 
-        /* --- Background type --- */
         $repeater->add_control(
             'bg_type',
             [
@@ -72,9 +125,9 @@ class Widget extends Widget_Base {
                 'type'    => Controls_Manager::SELECT,
                 'default' => 'none',
                 'options' => [
-                    'none'     => __( 'None (Template fills slide)', 'tp-skew-slider' ),
-                    'image'    => __( 'Image', 'tp-skew-slider' ),
-                    'color'    => __( 'Solid Color', 'tp-skew-slider' ),
+                    'none'  => __( 'None', 'tp-skew-slider' ),
+                    'image' => __( 'Image', 'tp-skew-slider' ),
+                    'color' => __( 'Solid Color', 'tp-skew-slider' ),
                 ],
             ]
         );
@@ -102,7 +155,6 @@ class Widget extends Widget_Base {
             ]
         );
 
-        /* --- Overlay --- */
         $repeater->add_control(
             'overlay_color',
             [
@@ -115,14 +167,13 @@ class Widget extends Widget_Base {
             ]
         );
 
-        /* --- Content area: choose template OR enter raw HTML/shortcode --- */
         $repeater->add_control(
             'content_source',
             [
-                'label'   => __( 'Slide Content Source', 'tp-skew-slider' ),
-                'type'    => Controls_Manager::SELECT,
-                'default' => 'none',
-                'options' => [
+                'label'     => __( 'Slide Content', 'tp-skew-slider' ),
+                'type'      => Controls_Manager::SELECT,
+                'default'   => 'none',
+                'options'   => [
                     'none'     => __( 'None', 'tp-skew-slider' ),
                     'template' => __( 'Elementor Template', 'tp-skew-slider' ),
                     'custom'   => __( 'Custom HTML / Shortcode', 'tp-skew-slider' ),
@@ -148,13 +199,11 @@ class Widget extends Widget_Base {
                 'label'       => __( 'Custom HTML / Shortcode', 'tp-skew-slider' ),
                 'type'        => Controls_Manager::TEXTAREA,
                 'default'     => '',
-                'placeholder' => __( 'Paste an Elementor JSON section or any HTML/shortcode here.', 'tp-skew-slider' ),
                 'condition'   => [ 'content_source' => 'custom' ],
                 'label_block' => true,
             ]
         );
 
-        /* --- Optional text overlay (legacy / quick-use) --- */
         $repeater->add_control(
             'show_text_overlay',
             [
@@ -190,11 +239,10 @@ class Widget extends Widget_Base {
         $repeater->add_control(
             'link',
             [
-                'label'       => __( 'Title Link', 'tp-skew-slider' ),
-                'type'        => Controls_Manager::URL,
-                'placeholder' => 'https://',
-                'default'     => [ 'url' => '' ],
-                'condition'   => [ 'show_text_overlay' => 'yes' ],
+                'label'     => __( 'Title Link', 'tp-skew-slider' ),
+                'type'      => Controls_Manager::URL,
+                'default'   => [ 'url' => '' ],
+                'condition' => [ 'show_text_overlay' => 'yes' ],
             ]
         );
 
@@ -324,44 +372,6 @@ class Widget extends Widget_Base {
         $this->end_controls_section();
 
         /* ---------------------------------------------------------------
-         * SECTION: SCROLL BEHAVIOUR
-         * ------------------------------------------------------------- */
-        $this->start_controls_section(
-            'section_scroll',
-            [
-                'label' => __( 'Scroll Behaviour', 'tp-skew-slider' ),
-                'tab'   => Controls_Manager::TAB_CONTENT,
-            ]
-        );
-
-        $this->add_control(
-            'scroll_mode',
-            [
-                'label'   => __( 'Scroll Mode', 'tp-skew-slider' ),
-                'type'    => Controls_Manager::SELECT,
-                'default' => 'hijack',
-                'options' => [
-                    'hijack'   => __( 'Hijack page scroll (sticky, release after last slide)', 'tp-skew-slider' ),
-                    'freeflow' => __( 'Free-flow (slider scrolls with page)', 'tp-skew-slider' ),
-                ],
-                'description' => __( '"Hijack" replicates the original demo behaviour: slider sticks to top, each scroll tick advances one slide, page continues scrolling after the final slide.', 'tp-skew-slider' ),
-            ]
-        );
-
-        $this->add_control(
-            'wheel_tolerance',
-            [
-                'label'   => __( 'Wheel Tolerance (px)', 'tp-skew-slider' ),
-                'type'    => Controls_Manager::NUMBER,
-                'default' => 10,
-                'min'     => 1,
-                'max'     => 100,
-            ]
-        );
-
-        $this->end_controls_section();
-
-        /* ---------------------------------------------------------------
          * SECTION: STYLE — TITLE
          * ------------------------------------------------------------- */
         $this->start_controls_section(
@@ -455,59 +465,29 @@ class Widget extends Widget_Base {
         $this->end_controls_section();
     }
 
-    /**
-     * Render widget output on the frontend.
-     */
     protected function render() {
-        $settings = $this->get_settings_for_display();
-        $slides   = $settings['slides'] ?? [];
+        $settings     = $this->get_settings_for_display();
+        $slide_source = $settings['slide_source'] ?? 'cpt';
 
-        if ( empty( $slides ) ) {
-            echo '<p class="tp-skew-no-slides">' . esc_html__( 'Please add slides in the widget settings.', 'tp-skew-slider' ) . '</p>';
-            return;
+        if ( 'cpt' === $slide_source ) {
+            $slides_html = $this->_render_cpt_slides( $settings );
+            $total       = $slides_html['total'];
+            $html        = $slides_html['html'];
+        } else {
+            $slides      = $settings['slides'] ?? [];
+            $total       = count( $slides );
+            $html        = $this->_render_repeater_slides( $slides );
         }
 
-        $total       = count( $slides );
-        $scroll_mode = $settings['scroll_mode'] ?? 'hijack';
-        $tolerance   = absint( $settings['wheel_tolerance'] ?? 10 );
+        if ( ! $total ) {
+            echo '<p class="tp-skew-no-slides">' . esc_html__( 'No slides found.', 'tp-skew-slider' ) . '</p>';
+            return;
+        }
         ?>
-        <div class="skew-slider-area tp-skew-slider-widget"
-             data-scroll-mode="<?php echo esc_attr( $scroll_mode ); ?>"
-             data-tolerance="<?php echo esc_attr( $tolerance ); ?>">
+        <div class="skew-slider-area tp-skew-slider-widget" data-scroll="native">
 
             <div class="skew-slider-wrap">
-                <?php foreach ( $slides as $index => $slide ) : ?>
-                    <div class="skew-slider-item slide elementor-repeater-item-<?php echo esc_attr( $slide['_id'] ); ?>">
-
-                        <?php $this->_render_slide_background( $slide ); ?>
-
-                        <div class="slide__overlay"></div>
-
-                        <div class="slide__content-area">
-                            <?php $this->_render_slide_content( $slide ); ?>
-                        </div>
-
-                        <?php if ( 'yes' === ( $slide['show_text_overlay'] ?? 'yes' ) && ! empty( $slide['title'] ) ) : ?>
-                            <div class="skew-slider-content">
-                                <?php if ( ! empty( $slide['label'] ) ) : ?>
-                                    <span><?php echo esc_html( $slide['label'] ); ?></span>
-                                <?php endif; ?>
-                                <h4>
-                                    <?php if ( ! empty( $slide['link']['url'] ) ) : ?>
-                                        <a href="<?php echo esc_url( $slide['link']['url'] ); ?>"
-                                           <?php echo ! empty( $slide['link']['is_external'] ) ? 'target="_blank"' : ''; ?>
-                                           <?php echo ! empty( $slide['link']['nofollow'] ) ? 'rel="nofollow"' : ''; ?>>
-                                            <?php echo wp_kses_post( nl2br( esc_html( $slide['title'] ) ) ); ?>
-                                        </a>
-                                    <?php else : ?>
-                                        <?php echo wp_kses_post( nl2br( esc_html( $slide['title'] ) ) ); ?>
-                                    <?php endif; ?>
-                                </h4>
-                            </div>
-                        <?php endif; ?>
-
-                    </div>
-                <?php endforeach; ?>
+                <?php echo $html; ?>
             </div>
 
             <?php if ( 'yes' === ( $settings['show_copyright'] ?? 'yes' ) ) : ?>
@@ -573,41 +553,109 @@ class Widget extends Widget_Base {
     }
 
     /**
-     * Render the background layer for a single slide.
+     * Query section4slide CPT and render each post's ACF shortcode field as a slide.
      */
-    private function _render_slide_background( $slide ) {
-        $bg_type = $slide['bg_type'] ?? 'image';
+    private function _render_cpt_slides( $settings ) {
+        $posts_per_page = intval( $settings['cpt_posts_per_page'] ?? -1 );
+        $orderby        = sanitize_key( $settings['cpt_orderby'] ?? 'menu_order' );
+        $bg_field       = sanitize_key( $settings['cpt_bg_image_field'] ?? '' );
 
-        if ( 'image' === $bg_type && ! empty( $slide['bg_image']['url'] ) ) {
-            $url = esc_url( $slide['bg_image']['url'] );
-            echo '<div class="slide__img" style="background-image:url(\'' . $url . '\')"></div>';
-        } elseif ( 'color' === $bg_type ) {
-            echo '<div class="slide__img"></div>';
-        } else {
-            echo '<div class="slide__img slide__img--transparent"></div>';
+        $query = new \WP_Query( [
+            'post_type'      => 'section4slide',
+            'post_status'    => 'publish',
+            'posts_per_page' => $posts_per_page,
+            'orderby'        => $orderby,
+            'order'          => 'ASC',
+        ] );
+
+        if ( ! $query->have_posts() ) {
+            return [ 'total' => 0, 'html' => '' ];
         }
+
+        ob_start();
+        $count = 0;
+
+        while ( $query->have_posts() ) {
+            $query->the_post();
+            $count++;
+
+            $bg_style = '';
+            if ( $bg_field && function_exists( 'get_field' ) ) {
+                $img = get_field( $bg_field );
+                if ( ! empty( $img['url'] ) ) {
+                    $bg_style = ' style="background-image:url(\'' . esc_url( $img['url'] ) . '\')"';
+                }
+            }
+
+            $shortcode_content = '';
+            if ( function_exists( 'get_field' ) ) {
+                $raw = get_field( 'shortcode' );
+                if ( $raw ) {
+                    $shortcode_content = do_shortcode( $raw );
+                }
+            }
+
+            echo '<div class="skew-slider-item slide">';
+            echo '<div class="slide__img"' . $bg_style . '></div>';
+            echo '<div class="slide__overlay"></div>';
+            echo '<div class="slide__content-area">' . $shortcode_content . '</div>';
+            echo '</div>';
+        }
+
+        wp_reset_postdata();
+
+        return [ 'total' => $count, 'html' => ob_get_clean() ];
     }
 
     /**
-     * Render the per-slide content (template or custom HTML).
+     * Render slides from the Elementor repeater control.
      */
-    private function _render_slide_content( $slide ) {
-        $source = $slide['content_source'] ?? 'none';
+    private function _render_repeater_slides( $slides ) {
+        ob_start();
 
-        if ( 'template' === $source && ! empty( $slide['template_id'] ) ) {
-            echo \Elementor\Plugin::instance()->frontend->get_builder_content_for_display(
-                (int) $slide['template_id'],
-                true
-            );
+        foreach ( $slides as $slide ) {
+            echo '<div class="skew-slider-item slide elementor-repeater-item-' . esc_attr( $slide['_id'] ) . '">';
 
-        } elseif ( 'custom' === $source && ! empty( $slide['custom_content'] ) ) {
-            echo do_shortcode( wp_kses_post( $slide['custom_content'] ) );
+            $bg_type = $slide['bg_type'] ?? 'none';
+            if ( 'image' === $bg_type && ! empty( $slide['bg_image']['url'] ) ) {
+                echo '<div class="slide__img" style="background-image:url(\'' . esc_url( $slide['bg_image']['url'] ) . '\')"></div>';
+            } else {
+                echo '<div class="slide__img"></div>';
+            }
+
+            echo '<div class="slide__overlay"></div>';
+
+            echo '<div class="slide__content-area">';
+            $source = $slide['content_source'] ?? 'none';
+            if ( 'template' === $source && ! empty( $slide['template_id'] ) ) {
+                echo \Elementor\Plugin::instance()->frontend->get_builder_content_for_display( (int) $slide['template_id'], true );
+            } elseif ( 'custom' === $source && ! empty( $slide['custom_content'] ) ) {
+                echo do_shortcode( wp_kses_post( $slide['custom_content'] ) );
+            }
+            echo '</div>';
+
+            if ( 'yes' === ( $slide['show_text_overlay'] ?? '' ) && ! empty( $slide['title'] ) ) {
+                echo '<div class="skew-slider-content">';
+                if ( ! empty( $slide['label'] ) ) {
+                    echo '<span>' . esc_html( $slide['label'] ) . '</span>';
+                }
+                echo '<h4>';
+                if ( ! empty( $slide['link']['url'] ) ) {
+                    $target = ! empty( $slide['link']['is_external'] ) ? ' target="_blank"' : '';
+                    $rel    = ! empty( $slide['link']['nofollow'] ) ? ' rel="nofollow"' : '';
+                    echo '<a href="' . esc_url( $slide['link']['url'] ) . '"' . $target . $rel . '>' . wp_kses_post( nl2br( esc_html( $slide['title'] ) ) ) . '</a>';
+                } else {
+                    echo wp_kses_post( nl2br( esc_html( $slide['title'] ) ) );
+                }
+                echo '</h4></div>';
+            }
+
+            echo '</div>';
         }
+
+        return ob_get_clean();
     }
 
-    /**
-     * Retrieve all Elementor templates for the template-picker control.
-     */
     private function _get_elementor_templates() {
         $templates = [];
         $query = new \WP_Query( [
