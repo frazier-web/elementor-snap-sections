@@ -23,11 +23,13 @@
         if ( nextBtn ) nextBtn.addEventListener( 'click', () => slideshow.next() );
 
         Observer.create( {
+            target    : document,
             type      : 'wheel,touch,pointer',
             onDown    : () => slideshow.prev(),
             onUp      : () => slideshow.next(),
             wheelSpeed: -1,
             tolerance : 10,
+            preventDefault: true,
         } );
     }
 

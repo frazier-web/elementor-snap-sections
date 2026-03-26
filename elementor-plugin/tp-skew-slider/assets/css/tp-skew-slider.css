@@ -15,6 +15,23 @@
 }
 
 /* ============================================================
+   Strip Elementor's default widget-container padding
+   ============================================================ */
+.elementor-widget-tp-skew-slider .elementor-widget-container,
+.elementor-widget-container:has(> .skew-slider-area) {
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 0;
+    font-size: 0;
+}
+
+.elementor-element:has(.skew-slider-area),
+.e-con:has(.skew-slider-area) {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* ============================================================
    Wrapper — full viewport height, contains all layers
    ============================================================ */
 .tp-skew-slider-widget .skew-slider-area {
