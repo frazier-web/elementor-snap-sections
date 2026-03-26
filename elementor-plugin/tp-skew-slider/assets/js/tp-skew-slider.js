@@ -23,7 +23,6 @@
         if ( nextBtn ) nextBtn.addEventListener( 'click', () => slideshow.next() );
 
         Observer.create( {
-            target    : wrap,
             type      : 'wheel,touch,pointer',
             onDown    : () => slideshow.prev(),
             onUp      : () => slideshow.next(),
