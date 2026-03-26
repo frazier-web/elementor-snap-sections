@@ -306,81 +306,6 @@
 }
 
 /* ============================================================
-   Social links (vertical, left side)
-   ============================================================ */
-.tp-skew-slider-widget .tp-portfolio-slider__social {
-    position: absolute;
-    top: 50%;
-    left: 5%;
-    z-index: 10;
-    writing-mode: vertical-rl;
-    transform: translateY(-50%) rotate(180deg);
-}
-
-.tp-skew-slider-widget .tp-portfolio-slider__social a {
-    font-weight: 700;
-    font-size: 14px;
-    line-height: 1;
-    margin: 14px 0;
-    display: inline-block;
-    text-transform: uppercase;
-    color: var(--tpss-white);
-    text-decoration: none;
-    transition: opacity 0.2s;
-}
-
-.tp-skew-slider-widget .tp-portfolio-slider__social a:hover {
-    opacity: 0.7;
-}
-
-/* ============================================================
-   Copyright / footer text (top-center)
-   ============================================================ */
-.tp-skew-slider-widget .tp-portfolio-slider__copyright {
-    position: absolute;
-    top: 45px;
-    left: 50%;
-    z-index: 10;
-    transform: translateX(-50%);
-    white-space: nowrap;
-}
-
-.tp-skew-slider-widget .tp-portfolio-slider__copyright p {
-    font-weight: 700;
-    font-size: 14px;
-    line-height: 1;
-    margin: 0;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: var(--tpss-white);
-}
-
-.tp-skew-slider-widget .tp-portfolio-slider__copyright p a {
-    color: inherit;
-    text-decoration: none;
-    position: relative;
-}
-
-.tp-skew-slider-widget .tp-portfolio-slider__copyright p a::after {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 0;
-    height: 1px;
-    opacity: 0;
-    visibility: hidden;
-    transition: width 0.3s, opacity 0.3s;
-    background-color: var(--tpss-white);
-}
-
-.tp-skew-slider-widget .tp-portfolio-slider__copyright p:hover a::after {
-    width: 100%;
-    opacity: 1;
-    visibility: visible;
-}
-
-/* ============================================================
    Editor / no-slides placeholder
    ============================================================ */
 .tp-skew-no-slides {
@@ -427,9 +352,6 @@
     .tp-skew-slider-widget .slides-numbers-wrap {
         display: none;
     }
-    .tp-skew-slider-widget .tp-portfolio-slider__social {
-        left: 45px;
-    }
 }
 
 @media (max-width: 767px) {
@@ -444,12 +366,6 @@
         bottom: 50px;
     }
     .tp-skew-slider-widget .slides-numbers-wrap {
-        display: none;
-    }
-    .tp-skew-slider-widget .tp-portfolio-slider__social {
-        display: none;
-    }
-    .tp-skew-slider-widget .tp-portfolio-slider__copyright {
         display: none;
     }
 }

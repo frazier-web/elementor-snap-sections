@@ -301,74 +301,6 @@ class Widget extends Widget_Base {
             ]
         );
 
-        $this->add_control(
-            'show_copyright',
-            [
-                'label'   => __( 'Show Footer Text', 'tp-skew-slider' ),
-                'type'    => Controls_Manager::SWITCHER,
-                'default' => 'yes',
-            ]
-        );
-
-        $this->add_control(
-            'copyright_text',
-            [
-                'label'     => __( 'Footer Text', 'tp-skew-slider' ),
-                'type'      => Controls_Manager::TEXT,
-                'default'   => __( "Have a project in mind? Let's Talk.", 'tp-skew-slider' ),
-                'condition' => [ 'show_copyright' => 'yes' ],
-            ]
-        );
-
-        $this->add_control(
-            'copyright_link',
-            [
-                'label'     => __( 'Footer Link', 'tp-skew-slider' ),
-                'type'      => Controls_Manager::URL,
-                'default'   => [ 'url' => '#' ],
-                'condition' => [ 'show_copyright' => 'yes' ],
-            ]
-        );
-
-        $this->add_control(
-            'show_social',
-            [
-                'label'   => __( 'Show Social Links', 'tp-skew-slider' ),
-                'type'    => Controls_Manager::SWITCHER,
-                'default' => 'yes',
-            ]
-        );
-
-        $this->add_control(
-            'social_fb',
-            [
-                'label'     => __( 'Facebook URL', 'tp-skew-slider' ),
-                'type'      => Controls_Manager::URL,
-                'default'   => [ 'url' => '#' ],
-                'condition' => [ 'show_social' => 'yes' ],
-            ]
-        );
-
-        $this->add_control(
-            'social_in',
-            [
-                'label'     => __( 'LinkedIn URL', 'tp-skew-slider' ),
-                'type'      => Controls_Manager::URL,
-                'default'   => [ 'url' => '#' ],
-                'condition' => [ 'show_social' => 'yes' ],
-            ]
-        );
-
-        $this->add_control(
-            'social_be',
-            [
-                'label'     => __( 'Behance URL', 'tp-skew-slider' ),
-                'type'      => Controls_Manager::URL,
-                'default'   => [ 'url' => '#' ],
-                'condition' => [ 'show_social' => 'yes' ],
-            ]
-        );
-
         $this->end_controls_section();
 
         /* ---------------------------------------------------------------
@@ -489,34 +421,6 @@ class Widget extends Widget_Base {
             <div class="skew-slider-wrap">
                 <?php echo $html; ?>
             </div>
-
-            <?php if ( 'yes' === ( $settings['show_copyright'] ?? 'yes' ) ) : ?>
-                <div class="tp-portfolio-slider__copyright">
-                    <p>
-                        <?php if ( ! empty( $settings['copyright_link']['url'] ) ) : ?>
-                            <a href="<?php echo esc_url( $settings['copyright_link']['url'] ); ?>">
-                                <?php echo esc_html( $settings['copyright_text'] ?? '' ); ?>
-                            </a>
-                        <?php else : ?>
-                            <?php echo esc_html( $settings['copyright_text'] ?? '' ); ?>
-                        <?php endif; ?>
-                    </p>
-                </div>
-            <?php endif; ?>
-
-            <?php if ( 'yes' === ( $settings['show_social'] ?? 'yes' ) ) : ?>
-                <div class="tp-portfolio-slider__social">
-                    <?php if ( ! empty( $settings['social_fb']['url'] ) ) : ?>
-                        <a href="<?php echo esc_url( $settings['social_fb']['url'] ); ?>">Fb</a>
-                    <?php endif; ?>
-                    <?php if ( ! empty( $settings['social_in']['url'] ) ) : ?>
-                        <a href="<?php echo esc_url( $settings['social_in']['url'] ); ?>">In</a>
-                    <?php endif; ?>
-                    <?php if ( ! empty( $settings['social_be']['url'] ) ) : ?>
-                        <a href="<?php echo esc_url( $settings['social_be']['url'] ); ?>">Be</a>
-                    <?php endif; ?>
-                </div>
-            <?php endif; ?>
 
             <div class="skew-slider-arrow slides-nav">
                 <button class="skew-slider-prev d-flex align-items-center" aria-label="<?php esc_attr_e( 'Previous slide', 'tp-skew-slider' ); ?>">
